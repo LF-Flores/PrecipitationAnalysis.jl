@@ -70,3 +70,28 @@ function make_stations()
 end
 
 const STATIONS = make_stations()
+
+function findminmax(v::AbstractVector{WeatherStation})
+    fechas = Set{Date}()
+    for data ∈ v.data
+        for date ∈ data.dates
+            push!(fechas,date)
+        end
+    end
+    return min(fechas...), max(fechas...)
+end
+const MINMAX_DATES_TUPLE = findminmax(STATIONS)
+
+# TODO: Las fechas se importaron incorrectamente. Revisar el archivo de bash que pasa de Excel a csv
+function make_time_densities()
+    mind, maxd = MINMAX_DATES_TUPLE
+    rango_fechas = mind:Day(1):maxd
+    dict_results = Dict()
+    for fecha ∈ rango_fechas
+        try
+            dict_results[fecha] = STATIONS[fecha]
+        catch
+        end
+    end
+    return dict_results
+end
