@@ -1,36 +1,56 @@
 function make_ts(filename)
     local csv
     try
-        csv = CSV.File(filename, header = 4, 
-                       select = [17, 18], silencewarnings = true)
-        @assert typeof(csv[1][1]) <: AbstractString && typeof(csv[1][2]) <: Real
+        csv = CSV.File(filename, header = 0, 
+                       select = [17, 18], silencewarnings = true, skipto=5)
+        return try_fill_ts(csv)
     catch
-        csv = CSV.File(filename, header = 4, 
-                       select = [17, 18] .+ 2, silencewarnings = true)   
+        csv = CSV.File(filename, header = 0, 
+                       select = [17, 18] .+ 2, silencewarnings = true, skipto=5)
+        return try_fill_ts(csv)
     end
-    fechas = Dates.Date[]
-    pcp = Float64[]
-    already_printed = false
-    for (fecha, p) ∈ csv[begin:end-1]
-        if !(typeof(fecha) <: AbstractString); continue; end
-        try
-            push!(fechas, Date(fecha, DateFormat("d/m/y")))
-            push!(pcp, p)
-        catch
-            push!(fechas, Date(fecha, DateFormat("m/d/y")))
-            push!(pcp, p)
-        end
+end
+
+function try_fill_ts(csv)
+    local fechas
+    local pcp
+    try
+        fechas, pcp = try_push_data(csv, "d/m/y")
+    catch 
+        fechas, pcp = try_push_data(csv, "m/d/y")
     end
     return TimeData(fechas, pcp) 
 end
 
+function try_push_data(csv, date_format)
+    typos = (".0    .0", ".   .0", "0  0.0", "")
+    fechas = Dates.Date[]
+    pcp = Float64[]
+    for (fecha, p) ∈ csv
+        if ismissing(fecha); continue; end
+        if typeof(p) <: AbstractString
+            p = p ∈ typos ? "0.0" : p
+            p = parse(Float64,replace(p, ',' => '.', "*" => "-9999"))
+        end
+        push!(fechas, Date(fecha, DateFormat(date_format)))
+        push!(pcp, p)
+    end
+    return fechas, pcp
+end
+
 function make_all_ts(directory)
     stations = WeatherStation[]
+    local data
+    local coords
     for file in readdir(directory)
         source, _, name = split(file, "-")
         name = replace(name, ".csv" => "")
-        data = make_ts(directory*file)
-        coords = get_coords(directory*file)
+        try
+            data = make_ts(directory*file) 
+            coords = get_coords(directory*file)
+        catch
+            continue
+        end
         current_station = WeatherStation(name, source, data, coords)
         push!(stations, current_station)
     end
@@ -82,16 +102,39 @@ function findminmax(v::AbstractVector{WeatherStation})
 end
 const MINMAX_DATES_TUPLE = findminmax(STATIONS)
 
-# TODO: Las fechas se importaron incorrectamente. Revisar el archivo de bash que pasa de Excel a csv
+# TODO: Las fechas se importaron incorrectamente. Revisar el archivo de bash que pasa de Excel a csv. Siguen mal, por la forma en que Julia los incorpora.
 function make_time_densities()
-    mind, maxd = MINMAX_DATES_TUPLE
-    rango_fechas = mind:Day(1):maxd
-    dict_results = Dict()
-    for fecha ∈ rango_fechas
-        try
-            dict_results[fecha] = STATIONS[fecha]
-        catch
+    local dict_results
+    try
+        dict_results = deserialize(TIME_DENSITIES_FILEPATH)
+    catch
+        mind, maxd = MINMAX_DATES_TUPLE
+        rango_fechas = mind:Day(1):maxd
+        dict_results = Dict()
+        for fecha ∈ rango_fechas
+            try
+                dict_results[fecha] = STATIONS[fecha]
+            catch
+            end
         end
     end
     return dict_results
 end
+const TIME_DENSITIES = make_time_densities()
+
+function dates_with_matches_over(n)
+    return filter(x -> x |> last |> length > n, TIME_DENSITIES) |> keys |> collect |> sort
+end
+
+function count_date_matching_stations(time_densities)
+    longs = time_densities |> values .|> length
+    imin = findmin(longs)[1]
+    imax = findmax(longs)[1]
+    result = Dict{String, Int64}()
+    for i ∈ imin:imax
+        result["fechas con $i coincidencias"] = count(y->y==i, longs)
+    end
+    return result
+end
+
+const CONTEO_DE_COINCIDENCIAS = count_date_matching_stations(TIME_DENSITIES)

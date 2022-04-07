@@ -4,7 +4,7 @@ using CSV, Serialization, Dates, Geodesy, DataStructures, Statistics, StructArra
 using PolygonOps
 import Base: getindex, eltype
 
-export STATIONS, GEOMETRIES
+export STATIONS, GEOMETRIES, DEPARTAMENTOS
 export WeatherStation
 
 include("constants.jl")

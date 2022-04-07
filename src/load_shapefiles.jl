@@ -27,5 +27,3 @@ function make_geometries()
 end
 
 const GEOMETRIES = make_geometries()
-
-# TODO: Hacer tests de departamento para la estaciones (in-polygon)

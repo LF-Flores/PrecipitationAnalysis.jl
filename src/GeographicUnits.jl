@@ -56,10 +56,8 @@ const DEPARTAMENTOS = make_departamentos_data()
 
 # TODO: Municipio si es necesario, el problema con éstos es que hay nombres repetidos. Para lidiar con ello, el nombre puede venir acompañado con el depto al que pertenecen, pero se debe revisar si la conexión depto-municipio existe en la data
 
-
-# Tres casos problemáticos:
-# - Roatán: No parece que la estación estacion en algún pedazo de tierra representado en los datos, pero sí en la bounding box. Se puede hacer una excepción y manualmente corregir que sí está.
-# - El Coco y La Esperanza: tienen coordenadas erróneas.
+# caso problemático:
+# - Roatán: No parece que la estación esté en algún pedazo de tierra representado en los datos, pero sí en la bounding box. Se puede hacer una excepción y manualmente corregir que sí está.
 function check_estaciones(mostrar_encontradas = false)
     for s ∈ STATIONS
         found = false
