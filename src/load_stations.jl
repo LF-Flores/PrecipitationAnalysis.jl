@@ -51,7 +51,8 @@ function make_all_ts(directory)
         catch
             continue
         end
-        current_station = WeatherStation(name, source, data, coords)
+        ts = TimeArray(data.dates, data.pcp, [Symbol(name)])
+        current_station = WeatherStation(name, string(source), ts, coords)
         push!(stations, current_station)
     end
     return stations
@@ -94,8 +95,9 @@ const STATIONS = make_stations()
 function findminmax(v::AbstractVector{WeatherStation})
     fechas = Set{Date}()
     for data ∈ v.data
-        for date ∈ data.dates
-            push!(fechas,date)
+        for date ∈ eachrow(data)
+            # @show date typeof(date)
+            push!(fechas,date.timestamp)
         end
     end
     return min(fechas...), max(fechas...)
@@ -114,9 +116,10 @@ function make_time_densities()
         for fecha ∈ rango_fechas
             try
                 dict_results[fecha] = STATIONS[fecha]
-            catch
+            catch 
             end
         end
+        serialize(TIME_DENSITIES_FILEPATH, dict_results)
     end
     return dict_results
 end

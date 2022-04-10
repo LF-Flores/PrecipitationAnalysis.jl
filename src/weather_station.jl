@@ -1,12 +1,12 @@
-struct TimeData
+struct TimeData # Debería de ser Date, Float64
     dates::Vector{Date}
     pcp::Vector{Float64}
 end
 
-struct WeatherStation
+struct WeatherStation{T <: TimeArray}
     name::String
     source_of_data::String
-    data::TimeData
+    data::T # Debería de ser T <: AbstractVector{<:TimeData}, para aprovechar un StructArray.
     coords::LLA{Float64}
 end
 
@@ -22,7 +22,7 @@ end
 function Base.getindex(v::AbstractVector{<:WeatherStation}, i::Dates.Date)
     result = WeatherStation[]
     for s ∈ v
-        dates = s.data.dates
+        dates = timestamp(s.data)
         mindate = findmin(dates)[1]
         maxdate = findmax(dates)[1]
         if mindate ≤ i ≤ maxdate

@@ -1,6 +1,6 @@
 module PrecipitationAnalysis
 
-using CSV, Serialization, Dates, Geodesy, DataStructures, Statistics, StructArrays, Shapefile
+using CSV, Serialization, Dates, Geodesy, DataStructures, Statistics, StructArrays, Shapefile, TimeSeries
 using PolygonOps
 import Base: getindex, eltype
 
