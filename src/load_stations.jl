@@ -129,13 +129,30 @@ function dates_with_matches_over(n)
     return filter(x -> x |> last |> length > n, TIME_DENSITIES) |> keys |> collect |> sort
 end
 
+## Conteo de coincidencias
+struct NumFechasConCoincidencias
+    coincidencias::Int
+    num_de_fechas::Int
+end
+
+function Base.show(io::IO, x::NumFechasConCoincidencias) 
+    i = x.coincidencias
+    n = x.num_de_fechas
+    s = i == 1 ? "" : "s"
+    toprint = "Fechas con $i coincidencia$s => $n"
+    print(io, toprint)
+end
+
 function count_date_matching_stations(time_densities)
     longs = time_densities |> values .|> length
     imin = findmin(longs)[1]
     imax = findmax(longs)[1]
-    result = Dict{String, Int64}()
+    # result = Dict{String, Int64}()
+    result = NumFechasConCoincidencias[]
     for i ∈ imin:imax
-        result["fechas con $i coincidencias"] = count(y->y==i, longs)
+        elem = NumFechasConCoincidencias(i, count(y->y==i, longs))
+        # result["fechas con $i coincidencias"] = count(y->y==i, longs)
+        push!(result, elem) 
     end
     return result
 end

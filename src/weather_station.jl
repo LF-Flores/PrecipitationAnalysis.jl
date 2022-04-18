@@ -71,3 +71,5 @@ function Base.getindex(p::Shapefile.Point, i::Integer)
 end
 
 Base.eltype(::Geodesy.LLA{T}) where {T<:Number} = T
+
+Base.length(w::WeatherStation) = length(w.data)
